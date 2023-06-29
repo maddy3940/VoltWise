@@ -4,6 +4,30 @@ from prophet import Prophet
 import numpy as np
 import pickle
 import boto3
+import io
+from io import BytesIO
+
+def load_data():
+    # Read from an S3 bucket
+    bucket_name = 'ecc-eia-data'
+    key = 'raw_data_daily/'
+
+    response = s3_client.list_objects_v2(Bucket=bucket_name,Prefix=key)
+    
+    # Extract the file names
+    file_names = [os.path.basename(obj['Key']) for obj in response['Contents']]
+
+    region_data = {}
+    for filename in file_names:
+        if filename.endswith('.csv'):
+            # Extract the region name from the file name
+            region = filename.split('.')[0]
+            df = read_from_s3(bucket_name,key+f'{region}.csv')
+            # Store the data in the dictionary with the region name as the key
+            region_data[region] = df
+           
+
+    return region_data
 
 def preprocess_data(data, region):
     # Filter data for the specified region
@@ -27,23 +51,20 @@ def preprocess_data(data, region):
 
     return demand_data, generation_data
 
-def load_data():
-    directory= "/workspace/VoltWise/Data_Ingestion/daily_data/"
+# Read function
+def read_from_s3(bucket_name,key):
+    response = s3_client.get_object(Bucket=bucket_name, Key=key)
+    data = response['Body'].read()
+    df = io.BytesIO(data)
+    df = pd.read_csv(df)
+    return df
 
-    region_data = {}
-    for filename in os.listdir(directory):
-        if filename.endswith('.parquet'):
-            # Extract the region name from the file name
-            region = filename.split('.')[0]
-
-            # Read the contents of the file into a variable
-            filepath = os.path.join(directory, filename)
-            df = pd.read_parquet(filepath)
-            
-            # Store the data in the dictionary with the region name as the key
-            region_data[region] = df
-    
-    return region_data
+def write_to_s3(df,bucket_name,key,filename):
+    output_data = df.to_csv(index=False)
+    # Convert the CSV data to bytes
+    output_bytes = output_data.encode('utf-8')
+    # Write the CSV data to the bucket
+    s3_client.put_object(Body=output_bytes, Bucket=bucket_name, Key=key+filename)
 
 
 
@@ -62,18 +83,30 @@ def train_prophet_model(region, data_type, data):
     # Create and fit the Prophet model
     model = Prophet()
     model.fit(data)
+    model_bytes  = pickle.dumps(model)
 
-    # Save the model as a pickle file
-    model_directory = f"/workspace/VoltWise/Modelling/Prophet/Pickle_files"
-    if not os.path.exists(model_directory):
-        os.makedirs(model_directory)
+    # Specify the bucket name and object key
+    bucket_name = 'models-prophet'
+    object_key = f'{region}_{data_type}_model.pkl'
 
-    with open(f"{model_directory}/{region}_{data_type}_prophet_model.pkl", "wb") as file:
-        pickle.dump(model, file)
+    # Write the pickle file to S3 bucket
+    s3_client.put_object(Body=model_bytes, Bucket=bucket_name, Key=object_key)
+
+    # Print the confirmation message
+    print(f"Prophet model for {region} {data_type} has been stored in S3 bucket.")
+
+
+# Specify the access keys
+access_key_id = 'AKIAZIMSUAOJMLAWL5SF'
+secret_access_key = '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'
+
+# Create an S3 client
+s3_client = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
+
 
 region_data= load_data()            
 regions = list(region_data.keys())
-data_types = ['demand', 'generation']
+print("Loaded Data")
 
 
 # Preprocess data for each region and store it in a dictionary
@@ -81,8 +114,8 @@ preprocessed_data = {}
 for region in regions:
     demand_data, generation_data = preprocess_data(region_data.copy(), region)
     preprocessed_data[region] = {'demand': demand_data, 'generation': generation_data}
-    demand_data.to_csv(f'/workspace/VoltWise/Data_Ingestion/preprocessed_daily_data/{region}_demand.parquet', index=False)
-    generation_data.to_csv(f'/workspace/VoltWise/Data_Ingestion/preprocessed_daily_data/{region}_generation.parquet', index=False)
+
+print("Processed Raw Data into Demand and Generation for each region")
 
 data_types = ['demand', 'generation']
 
@@ -90,3 +123,6 @@ for region in regions:
     for data_type in data_types:
         region_preprocessed_data = preprocessed_data[region][data_type]
         train_prophet_model(region, data_type, region_preprocessed_data)
+
+print("Trained Prophet Models for each region and data type")
+
