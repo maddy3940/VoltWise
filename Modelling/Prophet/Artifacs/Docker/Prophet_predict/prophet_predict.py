@@ -72,7 +72,7 @@ data_types = ['demand', 'generation']
 s3_client = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
 # Set the number of periods for which to make predictions
-periods = 6 * 30  # Predict the next 6 months, assuming 30 days per month
+periods = 12 * 30  # Predict the next 12 months, assuming 30 days per month
 
 # Make predictions for each region and data type
 for region in regions:
