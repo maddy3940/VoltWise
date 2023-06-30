@@ -5,6 +5,7 @@ import numpy as np
 import pickle
 import boto3
 import io 
+import pyarrow
 
 def load_and_predict(region, data_type, periods):
     """
@@ -31,32 +32,39 @@ def load_and_predict(region, data_type, periods):
     future = model.make_future_dataframe(periods=periods, freq='D')
     forecast = model.predict(future)
 
+    selected_columns = ['ds', 'yhat']
+
+    # Select the desired columns using indexing operator []
+    forecast = forecast[selected_columns]
+
+    forecast.rename(columns={'ds':'date_time','yhat':'value'},inplace=True)
+    
     # Save the forecast as a CSV file
     print(f'Writing forecast for {region} {data_type} to S3')
-    write_to_s3(forecast, 'forecasts-eia', 'prophet/',f'{region}_{data_type}_forecast.csv')
+    write_to_s3(forecast, 'forecasts-eia', 'prophet/',f'{region}_{data_type}_forecast.parquet')
 
     return forecast
 
+class IgnoreCloseBytesIO(io.BytesIO):
+    def close(self):
+        # Ignore close operations
+        pass
 
-# Read function
-def read_from_s3(bucket_name,key):
-    response = s3_client.get_object(Bucket=bucket_name, Key=key)
-    data = response['Body'].read()
-    df = io.BytesIO(data)
-    df = pd.read_csv(df)
-    return df
+def write_to_s3(df, bucket_name, key, filename):
+    # Convert the DataFrame to Parquet format
+    output_stream = IgnoreCloseBytesIO()
+    df.to_parquet(output_stream, engine='pyarrow')
 
-def write_to_s3(df,bucket_name,key,filename):
-    output_data = df.to_csv(index=False)
-    # Convert the CSV data to bytes
-    output_bytes = output_data.encode('utf-8')
-    # Write the CSV data to the bucket
-    s3_client.put_object(Body=output_bytes, Bucket=bucket_name, Key=key+filename)
+    # IMPORTANT: Seek to the start of the stream before reading
+    output_stream.seek(0)
+
+    # Write the Parquet data to the S3 bucket
+    s3_client.put_object(Body=output_stream.getvalue(), Bucket=bucket_name, Key=key + filename)
 
 
 # Specify the access keys
-access_key_id = 'AKIAZIMSUAOJMLAWL5SF'
-secret_access_key = '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'
+access_key_id = ''
+secret_access_key = ''
 regions = ['CAL', 'CAR', 'CENT', 'FLA', 'MIDA', 'MIDW', 'NE', 'NY', 'SE', 'SW', 'TEX']
 data_types = ['demand', 'generation']
 

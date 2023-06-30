@@ -10,7 +10,7 @@ from io import BytesIO
 def load_data():
     # Read from an S3 bucket
     bucket_name = 'ecc-eia-data'
-    key = 'raw_data_daily/'
+    key = 'raw_data/daily-data/'
 
     response = s3_client.list_objects_v2(Bucket=bucket_name,Prefix=key)
     
@@ -19,13 +19,12 @@ def load_data():
 
     region_data = {}
     for filename in file_names:
-        if filename.endswith('.csv'):
+        if filename.endswith('.parquet'):
             # Extract the region name from the file name
             region = filename.split('.')[0]
-            df = read_from_s3(bucket_name,key+f'{region}.csv')
+            df = read_from_s3(bucket_name,key+f'{region}.parquet')
             # Store the data in the dictionary with the region name as the key
             region_data[region] = df
-           
 
     return region_data
 
@@ -55,18 +54,8 @@ def preprocess_data(data, region):
 def read_from_s3(bucket_name,key):
     response = s3_client.get_object(Bucket=bucket_name, Key=key)
     data = response['Body'].read()
-    df = io.BytesIO(data)
-    df = pd.read_csv(df)
+    df = pd.read_parquet(io.BytesIO(data))
     return df
-
-def write_to_s3(df,bucket_name,key,filename):
-    output_data = df.to_csv(index=False)
-    # Convert the CSV data to bytes
-    output_bytes = output_data.encode('utf-8')
-    # Write the CSV data to the bucket
-    s3_client.put_object(Body=output_bytes, Bucket=bucket_name, Key=key+filename)
-
-
 
 def train_prophet_model(region, data_type, data):
     """
@@ -103,11 +92,9 @@ secret_access_key = '9LyljAOLA3TXWRPEEB2Hl8PhEEgH5l2lWS2mpDhe'
 # Create an S3 client
 s3_client = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
-
 region_data= load_data()            
 regions = list(region_data.keys())
 print("Loaded Data")
-
 
 # Preprocess data for each region and store it in a dictionary
 preprocessed_data = {}
