@@ -30,7 +30,8 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            export MAX_CONCURRENT_DOWNLOADS=10
+            export MAX_CONCURRENT_DOWNLOADS=30
+            pip install --no-build-threads -r requirements.txt
             docker build -t prophet_retrain_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_retrain
             docker build -t prophet_predict_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_predict
 
