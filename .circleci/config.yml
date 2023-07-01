@@ -30,6 +30,7 @@ jobs:
       - run:
           name: Build Docker images
           command: |
+            export MAX_CONCURRENT_DOWNLOADS=10
             docker build -t prophet_retrain_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_retrain
             docker build -t prophet_predict_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_predict
 
