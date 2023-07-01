@@ -87,12 +87,13 @@ def get_new_dates(end_date):
 def update_raw_data(new_data):
     for k in regions:
         
-        key = f'raw_data/{k}.parquet'
+        key = f'raw_data/hourly-data/{k}.parquet'
         
-        key_daily = f'raw_data_daily/{k}.csv'
+        key_daily = f'raw_data/daily-data/{k}.parquet'
+        
+        key_graph = f'historic-graph-data/{k}.parquet'
 
         historic_region_data[k]=pd.read_parquet('s3://{}/{}'.format(bucket_name, key),use_pandas_metadata=True)
-        
         
         ct_0 = len(historic_region_data[k])
         new_data[k]['new_hash_time'] = new_data[k]['Date']+new_data[k]['Hour']
@@ -115,10 +116,9 @@ def update_raw_data(new_data):
 
         ct_1 = len(historic_region_data[k])
         
-        
         historic_region_data[k].to_parquet('s3://{}/{}'.format(bucket_name, key))  
 
-        print(f'Added {ct_1-ct_0} hourly new records for region {k} to raw_data folder') 
+        print(f'Added {ct_1-ct_0} hourly new records for region {k} to hourly-data folder') 
 
         # Converting hourly data to daily data and saving it to different bucket
 
@@ -129,9 +129,18 @@ def update_raw_data(new_data):
         historic_region_data[k]['Date'] = pd.to_datetime(historic_region_data[k]['Date'])
 
         # Save to new bucket containing daily data
-        historic_region_data[k].to_csv('s3://{}/{}'.format(bucket_name, key_daily),index=False)
+        historic_region_data[k].to_parquet('s3://{}/{}'.format(bucket_name, key_daily))
 
-        print(f'Added {ct_1-ct_0} daily new records for region {k} to raw_data_daily folder')
+        print(f'Added {ct_1-ct_0} daily new records for region {k} to data-daily folder')
+        
+        # Save graph data to historic-graph-data folder
+        historic_region_data[k] = historic_region_data[k][historic_region_data[k]['Date'] > '2020-12-31']
+        
+        historic_region_data[k].to_parquet('s3://{}/{}'.format(bucket_name, key_graph))
+
+        print(f'Added {ct_1-ct_0} daily new records for region {k} to graph folder')
+        
+
 
 end_date = (datetime.datetime.now()- datetime.timedelta(days=1)).strftime('%Y-%m-%d')
 start_date = get_new_dates(end_date)
