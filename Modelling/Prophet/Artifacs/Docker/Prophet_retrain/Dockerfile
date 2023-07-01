@@ -9,7 +9,7 @@ WORKDIR /app
 
 # Install the dependencies
 # RUN pip install --no-cache-dir -r requirements.txt
-RUN pip install --no-cache-dir boto3
+RUN pip install --no-cache-dir boto3 --no-deps
 RUN pip install --no-cache-dir fastparquet==2023.4.0
 RUN pip install --no-cache-dir numpy==1.25.0
 RUN pip install --no-cache-dir pandas==2.0.3
