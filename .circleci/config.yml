@@ -22,8 +22,8 @@ jobs:
       - run:
           name: Build Docker images
           command: |
-            docker build -t prophet_retrain_image:latest /VoltWise/Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
-            docker build -t prophet_predict_image:latest /VoltWise/Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
+            docker build -t prophet_retrain_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
+            docker build -t prophet_predict_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
 
       # Tag Docker images
       - run:
