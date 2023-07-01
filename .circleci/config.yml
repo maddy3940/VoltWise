@@ -7,6 +7,9 @@ jobs:
     steps:
       - checkout
 
+      - setup_remote_docker:
+          version: 20.10.7
+
       # Configure AWS CLI
       - run:
           name: Configure AWS CLI
