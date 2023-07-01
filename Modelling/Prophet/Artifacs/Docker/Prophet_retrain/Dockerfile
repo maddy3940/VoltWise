@@ -7,6 +7,9 @@ WORKDIR /app
 # Copy the requirements.txt file to the working directory
 # COPY requirements.txt .
 
+# Set MAX_CONCURRENT_WORKERS environment variable
+ENV MAX_CONCURRENT_WORKERS=4
+
 # Install the dependencies
 # RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir boto3
