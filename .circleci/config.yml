@@ -1,0 +1,41 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.8
+
+    steps:
+      - checkout
+
+      # Configure AWS CLI
+      - run:
+          name: Configure AWS CLI
+          command: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/config
+            echo "region = us-east-1" >> ~/.aws/config
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+            echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+
+      # Build Docker images
+      - run:
+          name: Build Docker images
+          command: |
+            docker build -t prophet_retrain_image:latest /Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
+            docker build -t prophet_predict_image:latest /Modelling/Prophet/Artifacs/Docker/Prophet_predict/Dockerfile
+
+      # Tag Docker images
+      - run:
+          name: Tag Docker images
+          command: |
+            docker tag prophet_retrain_image:latest 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_retrain:latest
+            docker tag prophet_predict_image:latest 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_predict:latest
+
+      # Push Docker images to ECR
+      - run:
+          name: Push Docker images to ECR
+          command: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 636499526546.dkr.ecr.us-east-1.amazonaws.com
+            docker push 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_retrain:latest
+            docker push 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_predict:latest
