@@ -8,7 +8,7 @@ WORKDIR /app
 # COPY requirements.txt .
 
 # Set MAX_CONCURRENT_WORKERS environment variable
-ENV MAX_CONCURRENT_WORKERS=4
+ENV MAX_CONCURRENT_WORKERS=2
 
 # Install the dependencies
 # RUN pip install --no-cache-dir -r requirements.txt
