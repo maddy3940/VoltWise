@@ -10,6 +10,9 @@ WORKDIR /app
 # # Set MAX_CONCURRENT_WORKERS environment variable
 # ENV MAX_CONCURRENT_WORKERS=2
 
+# Install Rust
+RUN apk add --no-cache rust cargo
+
 # Install the dependencies
 # RUN pip install --no-cache-dir -r requirements.txt
 RUN pip install --no-cache-dir boto3
