@@ -8,7 +8,7 @@ jobs:
       - checkout
 
       - setup_remote_docker:
-          version: 20.10.7
+          version: 23.0.1
 
       # Configure AWS CLI
       - run:
