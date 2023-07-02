@@ -137,17 +137,17 @@ jobs:
 
 workflows:
   version: 2
-  docker-build-1:
+  docker-build:
     when: << pipeline.parameters.docker_job >>
     jobs:
       - docker_job
     
-  ingestion-lambda-build-2:
+  ingestion-lambda-build:
     when: << pipeline.parameters.lambda_ingestion_job >>
     jobs:
       - lambda_ingestion_job
     
-  historic-lambda-build-3:
+  historic-lambda-build:
     when: << pipeline.parameters.lambda_historic_data_job >>
     jobs:
       - lambda_historic_data_job

@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import datetime
 
-# Pushed using CI/CD
+
 def fetch_data(url):
 
     # call API
