@@ -35,3 +35,9 @@ jobs:
           name: Deploy Lambda function
           command: |
             aws lambda update-function-code --function-name daily-ingestion --zip-file fileb://Lambda/daily-ingestion/function.zip
+
+workflows:
+  version: 2
+  build-deploy:
+    jobs:
+      - deploy_lambda
