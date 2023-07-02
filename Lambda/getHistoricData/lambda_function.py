@@ -6,8 +6,7 @@ import io
 # global object
 s3 = boto3.client('s3')
 
-    # Used CI/CD
-    # Used CI/CD
+# Pushed using CI/CD
 def get_forecast_data_from_s3(model, region, category, max_date):
     # Set the S3 bucket and file name
     bucket_name = 'forecasts-eia'
