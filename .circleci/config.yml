@@ -1,24 +1,30 @@
 version: 2.1
 
+orbs:
+  path-filtering: gotjosh/path-filtering@1.0.1
+
 workflows:
   version: 2
   docker_and_lambda:
     jobs:
-      - docker_job:
-          filters:
-            paths:
-              only:
-                - Modelling/Prophet/Artifacs/Docker/**
-      - lambda_ingestion_job:
-          filters:
-            paths:
-              only:
-                - Lambda/daily-ingestion/**
-      - lambda_historic_data_job:
-          filters:
-            paths:
-              only:
-                - Lambda/getHistoricData/**
+      - path-filtering/filter:
+          base: "main"
+          filters: |
+            Modelling/Prophet/Artifacs/Docker/**
+          post-steps:
+            - docker_job
+      - path-filtering/filter:
+          base: "main"
+          filters: |
+            Lambda/daily-ingestion/**
+          post-steps:
+            - lambda_ingestion_job
+      - path-filtering/filter:
+          base: "main"
+          filters: |
+            Lambda/getHistoricData/**
+          post-steps:
+            - lambda_historic_data_job
 
 jobs:
   docker_job:
