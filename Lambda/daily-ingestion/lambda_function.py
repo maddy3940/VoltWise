@@ -9,6 +9,7 @@ def fetch_data(url):
 
     # call API
     # Used CI/CD
+    # Used CI/CD
     r = requests.get(url)
     op = r.json()
     

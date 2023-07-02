@@ -7,6 +7,8 @@ import boto3
 import io 
 import pyarrow
 
+    # Used CI/CD
+    # Used CI/CD
 def load_and_predict(region, data_type, periods):
     """
     Load a trained Prophet model for a given region and data type, make predictions, and store the results.
