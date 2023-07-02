@@ -1,0 +1,55 @@
+version: 2.1
+jobs:
+  build:
+    docker:
+      - image: circleci/python:3.9
+
+    steps:
+      - checkout
+
+      - setup_remote_docker:
+          version: 20.10.7
+
+      # Install AWS CLI
+      - run:
+          name: Install AWS CLI
+          command: sudo pip install awscli
+
+      # Configure AWS CLI
+      - run:
+          name: Configure AWS CLI
+          command: |
+            mkdir -p ~/.aws
+            echo "[default]" > ~/.aws/config
+            echo "region = us-east-1" >> ~/.aws/config
+            echo "[default]" > ~/.aws/credentials
+            echo "aws_access_key_id = $AWS_ACCESS_KEY_ID" >> ~/.aws/credentials
+            echo "aws_secret_access_key = $AWS_SECRET_ACCESS_KEY" >> ~/.aws/credentials
+
+      # Upgrade pip
+      - run:
+          name: Upgrade pip
+          command: pip install --upgrade pip
+      
+      # Build Docker images
+      - run:
+          name: Build Docker images
+          command: |
+            export MAX_CONCURRENT_DOWNLOADS=30
+            docker build -t prophet_retrain_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_retrain
+            docker build -t prophet_predict_image:latest Modelling/Prophet/Artifacs/Docker/Prophet_predict
+
+      # Tag Docker images
+      - run:
+          name: Tag Docker images
+          command: |
+            docker tag prophet_retrain_image:latest 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_retrain:latest
+            docker tag prophet_predict_image:latest 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_predict:latest
+
+      # Push Docker images to ECR
+      - run:
+          name: Push Docker images to ECR
+          command: |
+            aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 636499526546.dkr.ecr.us-east-1.amazonaws.com
+            docker push 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_retrain:latest
+            docker push 636499526546.dkr.ecr.us-east-1.amazonaws.com/prophet_predict:latest
