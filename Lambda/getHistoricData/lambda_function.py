@@ -3,7 +3,7 @@ import pandas as pd
 import boto3
 import io
 
-# global object
+# global object–
 s3 = boto3.client('s3')
 
 
@@ -104,6 +104,7 @@ def lambda_handler(event, context):
     print("region:", region)
     print("time:", time)
     print("frequency:", frequency)
+    print("event:", event)
     
     
     # Retrieving and processing Historic data from S3
