@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import boto3
 import io
+from datetime import datetime, timedelta
 
 # global object–
 s3 = boto3.client('s3')
@@ -104,7 +105,7 @@ def lambda_handler(event, context):
     print("region:", region)
     print("time:", time)
     print("frequency:", frequency)
-    print("event:", event)
+    
     
     
     # Retrieving and processing Historic data from S3
@@ -125,10 +126,23 @@ def lambda_handler(event, context):
     
     
     
-    # # Convert date_time to epoch time in milliseconds for the trimmed DataFrames
-    aggregate_historic_demand_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_demand_df['date_time'].astype(int) / 10**6).astype(int)
-    aggregate_historic_generation_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_generation_df['date_time'].astype(int) / 10**6).astype(int)
+    # # # Convert date_time to epoch time in milliseconds for the trimmed DataFrames
+    # aggregate_historic_demand_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_demand_df['date_time'].astype(int) / 10**6).astype(int)
+    # aggregate_historic_generation_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_generation_df['date_time'].astype(int) / 10**6).astype(int)
     
+     # Define the time zone offset
+    target_offset = timedelta(hours=4)  # adjustment for Eastern Standard Time (EST) or Eastern Daylight Time (EDT) offset
+    
+    # Convert date_time to epoch time in milliseconds with the desired time zone offset
+    aggregate_historic_demand_df['epoch_time_ms'] = aggregate_historic_demand_df['date_time'].apply(
+        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    )
+    
+    aggregate_historic_generation_df['epoch_time_ms'] = aggregate_historic_generation_df['date_time'].apply(
+        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    )
+
+
     # Convert DataFrames to list of lists with epoch time as integers
     historic_demand_data = aggregate_historic_demand_df[['epoch_time_ms', 'value']].astype({'epoch_time_ms': int}).values.tolist()
     historic_generation_data = aggregate_historic_generation_df[['epoch_time_ms', 'value']].astype({'epoch_time_ms': int}).values.tolist()
@@ -149,9 +163,18 @@ def lambda_handler(event, context):
     trimmed_demand_df = trim_data(aggregate_demand_df, time)
     trimmed_generation_df = trim_data(aggregate_generation_df, time)
 
-    # Convert date_time to epoch time in milliseconds for the trimmed DataFrames
-    trimmed_demand_df.loc[:, 'epoch_time_ms'] = (trimmed_demand_df['date_time'].astype(int) / 10**6).astype(int) 
-    trimmed_generation_df.loc[:, 'epoch_time_ms'] = (trimmed_generation_df['date_time'].astype(int) / 10**6).astype(int)
+    # # Convert date_time to epoch time in milliseconds for the trimmed DataFrames
+    # trimmed_demand_df.loc[:, 'epoch_time_ms'] = (trimmed_demand_df['date_time'].astype(int) / 10**6).astype(int) 
+    # trimmed_generation_df.loc[:, 'epoch_time_ms'] = (trimmed_generation_df['date_time'].astype(int) / 10**6).astype(int)
+
+     # Convert date_time to epoch time in milliseconds with the desired time zone offset
+    trimmed_demand_df['epoch_time_ms'] = trimmed_demand_df['date_time'].apply(
+        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    )
+    
+    trimmed_generation_df['epoch_time_ms'] = trimmed_generation_df['date_time'].apply(
+        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    )
 
     # Convert the trimmed DataFrames to list of lists with epoch time as integers
     forecast_demand_data = trimmed_demand_df[['epoch_time_ms', 'value']].astype({'epoch_time_ms': int}).values.tolist()
