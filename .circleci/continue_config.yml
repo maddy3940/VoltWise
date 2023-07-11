@@ -10,6 +10,10 @@ parameters:
   lambda_historic_data_job:
     type: boolean
     default: false
+  lambda_statistics_data_job:
+    type: boolean
+    default: false
+
 
 jobs:
   docker_job:

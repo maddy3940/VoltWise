@@ -3,13 +3,9 @@ import json
 import boto3
 from io import BytesIO
 
-# CI/CD
+# Pushed via CI/CD
 # global object–
 s3 = boto3.client('s3')
-
-
-
-
 
 
 def get_historic_data_from_s3(region):
