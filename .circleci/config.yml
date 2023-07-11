@@ -13,3 +13,4 @@ workflows:
             Modelling/Prophet/Artifacs/Docker/.* docker_job true
             Lambda/daily-ingestion/.* lambda_ingestion_job true
             Lambda/getHistoricData/.* lambda_historic_data_job true
+            Lambda/getStatisticsData/.* lambda_statistics_data_job true
