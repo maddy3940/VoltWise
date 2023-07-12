@@ -67,6 +67,9 @@ def write_to_s3(df, bucket_name, key, filename):
 access_key_id = os.environ.get("access_key_id ")
 secret_access_key = os.environ.get("secret_access_key")
 
+print("Access id",access_key_id)
+print("Keys",secret_access_key)
+
 regions = ['CAL', 'CAR', 'CENT', 'FLA', 'MIDA', 'MIDW', 'NE', 'NY', 'SE', 'SW', 'TEX']
 data_types = ['demand', 'generation']
 

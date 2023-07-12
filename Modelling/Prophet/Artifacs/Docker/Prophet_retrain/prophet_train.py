@@ -89,6 +89,8 @@ def train_prophet_model(region, data_type, data):
 access_key_id = os.environ.get("access_key_id ")
 secret_access_key = os.environ.get("secret_access_key")
 
+print("Access id",access_key_id)
+print("Keys",secret_access_key)
 # Create an S3 client
 s3_client = boto3.client('s3', aws_access_key_id=access_key_id, aws_secret_access_key=secret_access_key)
 
