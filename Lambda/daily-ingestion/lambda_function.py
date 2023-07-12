@@ -3,8 +3,9 @@ import boto3
 import requests
 import pandas as pd
 import datetime
+import numpy as np
 
-
+# Added total interchange column
 def fetch_data(url):
 
     # call API
@@ -19,11 +20,11 @@ def fetch_data(url):
     df.reset_index(inplace=True)
     
     # organize data as needed
-    df.drop(columns=['Day-ahead demand forecast','Total interchange'], inplace=True)
+    # df.drop(columns=['Day-ahead demand forecast','Total interchange'], inplace=True)
     df[['Date', 'Hour']] = df['period'].str.split('T',expand=True)
     df = df.drop('period', axis = 1)
     df.rename(columns={'respondent':'region'}, inplace=True)
-    df = df[['Date','Hour','region','Demand','Net generation']]
+    df = df[['Date','Hour','region','Demand','Net generation','Day-ahead demand forecast','Total interchange']]
     # segregate data based on regions
 
     final_dict = segregate_to_region(df)
@@ -57,6 +58,7 @@ def data_correction(r,df):
             dfs.append(new_df)
         else:
             dfs.append(df[(df['Date']==dt)])
+    print('Data Correction')
     print(uq_date)
     dfs = pd.concat(dfs)
 
@@ -66,12 +68,15 @@ def generate_data(df,missing_hr,r,dt):
     
     demand_median = df['Demand'].median()
     net_gen_median = df['Net generation'].median()
+
+    forecast_median = df['Day-ahead demand forecast'].median()
+    interchange_median = df['Total interchange'].median()
     
     new_data=[]
     for hr in missing_hr:
-        new_data.append((dt,hr,r,demand_median,net_gen_median))
+        new_data.append((dt,hr,r,demand_median,net_gen_median,forecast_median,interchange_median))
         
-    df_missing = pd.DataFrame(new_data,columns=['Date', 'Hour', 'region','Demand','Net generation'])
+    df_missing = pd.DataFrame(new_data,columns=['Date', 'Hour', 'region','Demand','Net generation','Day-ahead demand forecast','Total interchange'])
     df_new = pd.concat([df,df_missing])
     df_new = df_new.sort_values(['Date','Hour'])
     
@@ -122,9 +127,14 @@ def update_raw_data(new_data):
 
         # Converting hourly data to daily data and saving it to different bucket
 
-        historic_region_data[k].drop(columns=['Hour','region'],inplace=True)
+        historic_region_data[k].drop(columns=['Hour'],inplace=True)
 
-        historic_region_data[k] = historic_region_data[k].groupby(historic_region_data[k]['Date'])[['Demand', 'Net generation']].sum().reset_index()
+        # Conditionally populate Export and Import columns
+        historic_region_data[k]['Export'] = np.where(historic_region_data[k]['Total interchange'] > 0, historic_region_data[k]['Total interchange'], 0)
+        historic_region_data[k]['Import'] = np.where(historic_region_data[k]['Total interchange'] < 0, -historic_region_data[k]['Total interchange'], 0)
+
+
+        historic_region_data[k] = historic_region_data[k].groupby(historic_region_data[k]['Date'])[['Demand', 'Net generation','Day-ahead demand forecast','Import','Export']].sum().reset_index()
 
         historic_region_data[k]['Date'] = pd.to_datetime(historic_region_data[k]['Date'])
 
