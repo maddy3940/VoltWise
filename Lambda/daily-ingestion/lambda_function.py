@@ -120,6 +120,8 @@ def update_raw_data(new_data):
         historic_region_data[k].drop(columns=['new_hash_time'],inplace=True)
 
         ct_1 = len(historic_region_data[k])
+
+        historic_region_data[k]['Hour']= historic_region_data[k]['Hour'].astype(int)
         
         historic_region_data[k].to_parquet('s3://{}/{}'.format(bucket_name, key))  
 
