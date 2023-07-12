@@ -64,7 +64,7 @@ def write_to_s3(df, bucket_name, key, filename):
 
 
 # Specify the access keys
-access_key_id = os.environ.get("access_key_id ")
+access_key_id = os.environ.get("access_key_id")
 secret_access_key = os.environ.get("secret_access_key")
 
 print("Access id",access_key_id)
