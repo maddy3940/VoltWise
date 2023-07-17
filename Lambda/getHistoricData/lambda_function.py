@@ -66,7 +66,7 @@ def aggregate_data(df, frequency):
         df = df.groupby(pd.Grouper(key='date_time', freq='Q')).sum().reset_index()
     elif frequency == '6M':
         # Aggregate by 6 months starting in January and July
-        df = df.groupby(pd.Grouper(key='date_time', freq='6M')).sum().reset_index()
+        df = df.groupby(pd.Grouper(key='date_time', freq='6M', closed = 'left')).sum().reset_index()
     else:
         raise ValueError("Invalid frequency. Supported values: D, W, M, 3M, 6M")
     
