@@ -3,7 +3,7 @@ import json
 import boto3
 from io import BytesIO
 
-# Pushed via CI/CD
+# Pushed via CI/CD - shubham
 # global object–
 s3 = boto3.client('s3')
 
@@ -43,10 +43,14 @@ def aggregate_data_by_month(df, year):
     total_demand_given_year = df_year['Demand'].sum()
     total_generation_given_year = df_year['Net generation'].sum()
     
+    #total import
+    total_energy_import = df_year['Import'].sum()
+    
+    #total import
+    total_energy_export = df_year['Export'].sum()
     
     
-    
-    return aggregated_data, total_demand_given_year, total_generation_given_year
+    return aggregated_data, total_demand_given_year, total_generation_given_year, total_energy_import, total_energy_export
 
 
 def average_demand_net_generation(df, year):
@@ -83,13 +87,13 @@ def percent_change_aggregated(df, year):
     print("inside percent_change_aggregated")
     
     # aggregated data for given year
-    aggregated_data_given_year, total_demand_given_year, total_generation_given_year = aggregate_data_by_month(df, year)
+    aggregated_data_given_year, total_demand_given_year, total_generation_given_year, total_energy_import, total_energy_export = aggregate_data_by_month(df, year)
     
     # percent change for each month of given year
     aggregate_percent_change_given_year = percent_change_by_month(aggregated_data_given_year)
     
     if year == 2015:
-        return aggregate_percent_change_given_year.fillna(0), total_demand_given_year, total_generation_given_year , 0, 0
+        return aggregate_percent_change_given_year.fillna(0), total_demand_given_year, total_generation_given_year , 0, 0, total_energy_import, total_energy_export
     
     # Filter the data frame for the previous year
     df_prev_year = df[df['Date'].dt.year == year - 1]
@@ -115,7 +119,7 @@ def percent_change_aggregated(df, year):
     percent_change_demand_given_year = (total_demand_given_year - total_demand_prev_year) / total_demand_prev_year  * 100
     percent_change_generation_given_year = (total_generation_given_year - total_generation_prev_year) / total_generation_prev_year *100
     
-    return aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year
+    return aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year, total_energy_import, total_energy_export
 
 def aggregate_data_by_quarter(df):
     print("inside aggregate_data_by_quarter")
@@ -181,7 +185,7 @@ def lambda_handler(event, context):
     print("year", year)
     
     
-    aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year = percent_change_aggregated(historic_df, year)
+    aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year, total_energy_import, total_energy_export = percent_change_aggregated(historic_df, year)
     
     print("total_demand_current_year: ",total_demand_given_year)
     print("total_demand_current_year_pc: ",percent_change_demand_given_year)
@@ -270,7 +274,9 @@ def lambda_handler(event, context):
         "aggregateDemandGivenYear" : aggregateDemandGivenYear,
         "aggregateGenerationGivenYear": aggregateGenerationGivenYear,
         "aggregateDemandCurrentMonth" : aggregateDemandCurrentMonth,
-        "aggregateGenerationCurrentMonth": aggregateGenerationCurrentMonth
+        "aggregateGenerationCurrentMonth": aggregateGenerationCurrentMonth,
+        "totalEnergyImport": total_energy_import, 
+        "totalEnergyExport": total_energy_export
         
         
     }
@@ -278,7 +284,7 @@ def lambda_handler(event, context):
  
     
     
-    # TODO implement
+    
     return {
         'statusCode': 200,
         'headers': {
