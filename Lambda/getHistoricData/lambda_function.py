@@ -3,6 +3,7 @@ import pandas as pd
 import boto3
 import io
 from datetime import datetime, timedelta
+import pytz
 
 # global object–
 s3 = boto3.client('s3')
@@ -92,6 +93,10 @@ def trim_data(df, time):
         trimmed_df = df
     
     return trimmed_df
+
+# Function to convert to the desired time zone
+def convert_to_timezone(date, timezone):
+    return pytz.timezone(timezone).localize(date)
     
 def lambda_handler(event, context):
     
@@ -144,17 +149,17 @@ def lambda_handler(event, context):
     # aggregate_historic_demand_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_demand_df['date_time'].astype(int) / 10**6).astype(int)
     # aggregate_historic_generation_df.loc[:, 'epoch_time_ms'] = (aggregate_historic_generation_df['date_time'].astype(int) / 10**6).astype(int)
     
-     # Define the time zone offset
-    target_offset = timedelta(hours=4)  # adjustment for Eastern Standard Time (EST) or Eastern Daylight Time (EDT) offset
+    # Define the time zone
+    target_timezone = 'America/New_York'  # Eastern Time Zone (EDT/EST)
     
-    # Convert date_time to epoch time in milliseconds with the desired time zone offset
+    # Convert date_time to epoch time in milliseconds with the appropriate time zone
     aggregate_historic_demand_df['epoch_time_ms'] = aggregate_historic_demand_df['date_time'].apply(
-        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
-    )
-    
+    lambda x: int(convert_to_timezone(x, target_timezone).timestamp() * 1000)
+)
+
     aggregate_historic_generation_df['epoch_time_ms'] = aggregate_historic_generation_df['date_time'].apply(
-        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
-    )
+    lambda x: int(convert_to_timezone(x, target_timezone).timestamp() * 1000)
+)   
 
     print(aggregate_historic_generation_df.tail())
 
