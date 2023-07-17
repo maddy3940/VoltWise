@@ -49,13 +49,27 @@ def get_historic_data_from_s3(region):
     return df,max_date
     
 def aggregate_data(df, frequency):
-    
     df.loc[:, 'date_time'] = pd.to_datetime(df['date_time'])
     
-    # Aggregate by frequency and reset the index
-    df = df.groupby(pd.Grouper(key='date_time', freq=frequency)).sum().reset_index()
-    df['value'] = df['value'].round(2)
+    if frequency == 'D':
+        # Aggregate by day
+        df = df.groupby(pd.Grouper(key='date_time', freq='D')).sum().reset_index()
+    elif frequency == 'W':
+        # Aggregate by week ending on staturday
+        df = df.groupby(pd.Grouper(key='date_time', freq='W-SAT')).sum().reset_index()
+    elif frequency == 'M':
+        # Aggregate by month
+        df = df.groupby(pd.Grouper(key='date_time', freq='M')).sum().reset_index()
+    elif frequency == '3M':
+        # Aggregate by quarter starting in January, April, July, October
+        df = df.groupby(pd.Grouper(key='date_time', freq='Q')).sum().reset_index()
+    elif frequency == '6M':
+        # Aggregate by 6 months starting in January and July
+        df = df.groupby(pd.Grouper(key='date_time', freq='6M')).sum().reset_index()
+    else:
+        raise ValueError("Invalid frequency. Supported values: D, W, M, 3M, 6M")
     
+    df['value'] = df['value'].round(2)
     return df
         
 def trim_data(df, time):
