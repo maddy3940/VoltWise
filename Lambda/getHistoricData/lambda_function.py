@@ -20,7 +20,7 @@ def get_forecast_data_from_s3(model, region, category, max_date):
         df = pd.read_csv(obj['Body'])
         df['date_time'] = pd.to_datetime(df['date_time'])
     else:
-        key = f'{model}/{region}_{category}_forecast1.parquet'
+        key = f'{model}/{region}_{category}_forecast.parquet'
         buffer = io.BytesIO()
         s3.download_fileobj(bucket_name, key, buffer)
         # Reset buffer position to the beginning
