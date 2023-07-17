@@ -188,13 +188,23 @@ def lambda_handler(event, context):
     # trimmed_generation_df.loc[:, 'epoch_time_ms'] = (trimmed_generation_df['date_time'].astype(int) / 10**6).astype(int)
 
      # Convert date_time to epoch time in milliseconds with the desired time zone offset
-    trimmed_demand_df['epoch_time_ms'] = trimmed_demand_df['date_time'].apply(
-        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
-    )
+    # trimmed_demand_df['epoch_time_ms'] = trimmed_demand_df['date_time'].apply(
+    #     lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    # )
     
+    # trimmed_generation_df['epoch_time_ms'] = trimmed_generation_df['date_time'].apply(
+    #     lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
+    # )
+
+
+    # Convert date_time to epoch time in milliseconds with the appropriate time zone
+    trimmed_demand_df['epoch_time_ms'] = trimmed_demand_df['date_time'].apply(
+    lambda x: int(convert_to_timezone(x, target_timezone).timestamp() * 1000)
+)
+
     trimmed_generation_df['epoch_time_ms'] = trimmed_generation_df['date_time'].apply(
-        lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
-    )
+    lambda x: int(convert_to_timezone(x, target_timezone).timestamp() * 1000)
+) 
 
     # Convert the trimmed DataFrames to list of lists with epoch time as integers
     forecast_demand_data = trimmed_demand_df[['epoch_time_ms', 'value']].astype({'epoch_time_ms': int}).values.tolist()
