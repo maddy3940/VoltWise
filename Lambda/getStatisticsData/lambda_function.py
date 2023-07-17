@@ -158,138 +158,150 @@ def get_data_list_by_quarter(df, key):
 def lambda_handler(event, context):
     
     
-    response = {
-        'statusCode': 200,
-        'headers': {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'OPTIONS,GET',
-            'Access-Control-Allow-Headers': 'Content-Type'
+    try:
+        response = {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'OPTIONS,GET',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            }
         }
-    }
     
     
-    if event['httpMethod'] == 'OPTIONS':
-        print("options request")
-        return response
+        if event['httpMethod'] == 'OPTIONS':
+            print("options request")
+            return response
+            
         
-    
-    region = event['queryStringParameters']['region']
-    year = int(event['queryStringParameters']['year'])
-    
-    
-    
-    # get historic data from 2015 to current year
-    historic_df = get_historic_data_from_s3(region)
-    
-    print("region", region)
-    print("year", year)
-    
-    
-    aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year, total_energy_import, total_energy_export = percent_change_aggregated(historic_df, year)
-    
-    print("total_demand_current_year: ",total_demand_given_year)
-    print("total_demand_current_year_pc: ",percent_change_demand_given_year)
-    
-    total_demand_current_month = aggregate_percent_change_given_year['Demand'][len(aggregate_percent_change_given_year['Demand']) - 1]
-    total_demand_current_month_pc = aggregate_percent_change_given_year['Demand_pct_change'][len(aggregate_percent_change_given_year['Demand_pct_change']) - 1]
-    
-    total_generation_current_month = aggregate_percent_change_given_year['Net generation'][len(aggregate_percent_change_given_year['Net generation']) - 1]
-    total_generation_current_month_pc = aggregate_percent_change_given_year['Net_generation_pct_change'][len(aggregate_percent_change_given_year['Net_generation_pct_change']) - 1]
-    
-    average_demand_generation = average_demand_net_generation(historic_df, year)
-    
-    aggregate_data_quarter = aggregate_data_by_quarter(aggregate_percent_change_given_year)
-    
-    
-    monthly_data_df = aggregate_percent_change_given_year.rename(columns={"Demand": "Aggregate_Demand", "Net generation": "Aggregate_Generation"})
-    
-    monthly_data_df['Average_Demand'] = average_demand_generation['Demand']
-    monthly_data_df['Average_Generation'] = average_demand_generation['Net generation']
-    
-    monthly_data_df = calculate_generation_demand_ratio(monthly_data_df)
-    
-    
-    aggregate_demand_list_by_month = get_data_list_by_month(monthly_data_df, 'Aggregate_Demand')
-    aggregate_generation_list_by_month = get_data_list_by_month(monthly_data_df, 'Aggregate_Generation')
-    average_demand_list_by_month = get_data_list_by_month(monthly_data_df, 'Average_Demand')
-    average_generation_list_by_month = get_data_list_by_month(monthly_data_df, 'Average_Generation')
-    
-    table_records = monthly_data_df.to_dict('records')
-    
-    
-    aggregate_demand_list_by_quarter = get_data_list_by_quarter(aggregate_data_quarter, 'Demand')
-    
-    aggregate_generation_list_by_quarter = get_data_list_by_quarter(aggregate_data_quarter, 'Net generation')
-    
-    
-    
-    monthly_graph_data = {
-        "aggregateDemand": aggregate_demand_list_by_month,
-        "aggregateGeneration": aggregate_generation_list_by_month,
-        "averageDemand": average_demand_list_by_month,
-        "averageGeneration": average_generation_list_by_month
-    }
-    
-    aggregateGenerationGivenYear = {
-        "value": total_generation_given_year,
-        "percentChange": percent_change_generation_given_year
-    }
-    
-    aggregateDemandGivenYear = {
-        "value": total_demand_given_year,
-        "percentChange": percent_change_demand_given_year
-    }
-    
-    
-    aggregateDemandCurrentMonth = {
-        "value": total_demand_current_month,
-        "percentChange": total_demand_current_month_pc
-    }
-    
-    aggregateGenerationCurrentMonth = {
-        "value": total_generation_current_month,
-        "percentChange": total_generation_current_month_pc
-    }
-    
-    quarterly_graph_data = {
-        "aggregateDemand": aggregate_demand_list_by_quarter,
-        "aggregateGeneration": aggregate_generation_list_by_quarter
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    result = {
-        "region": region,
-        "year": year,
-        "monthlyGraph" : monthly_graph_data,
-        "quarterlyGraph" : quarterly_graph_data,
-        "tableData" : table_records,
-        "aggregateDemandGivenYear" : aggregateDemandGivenYear,
-        "aggregateGenerationGivenYear": aggregateGenerationGivenYear,
-        "aggregateDemandCurrentMonth" : aggregateDemandCurrentMonth,
-        "aggregateGenerationCurrentMonth": aggregateGenerationCurrentMonth,
-        "totalEnergyImport": total_energy_import, 
-        "totalEnergyExport": total_energy_export
+        region = event['queryStringParameters']['region']
+        year = int(event['queryStringParameters']['year'])
         
         
-    }
+        
+        # get historic data from 2015 to current year
+        historic_df = get_historic_data_from_s3(region)
+        
+        print("region", region)
+        print("year", year)
+        
+        
+        aggregate_percent_change_given_year, total_demand_given_year, total_generation_given_year, percent_change_demand_given_year, percent_change_generation_given_year, total_energy_import, total_energy_export = percent_change_aggregated(historic_df, year)
+        
+        print("total_demand_current_year: ",total_demand_given_year)
+        print("total_demand_current_year_pc: ",percent_change_demand_given_year)
+        
+        total_demand_current_month = aggregate_percent_change_given_year['Demand'][len(aggregate_percent_change_given_year['Demand']) - 1]
+        total_demand_current_month_pc = aggregate_percent_change_given_year['Demand_pct_change'][len(aggregate_percent_change_given_year['Demand_pct_change']) - 1]
+        
+        total_generation_current_month = aggregate_percent_change_given_year['Net generation'][len(aggregate_percent_change_given_year['Net generation']) - 1]
+        total_generation_current_month_pc = aggregate_percent_change_given_year['Net_generation_pct_change'][len(aggregate_percent_change_given_year['Net_generation_pct_change']) - 1]
+        
+        average_demand_generation = average_demand_net_generation(historic_df, year)
+        
+        aggregate_data_quarter = aggregate_data_by_quarter(aggregate_percent_change_given_year)
+        
+        
+        monthly_data_df = aggregate_percent_change_given_year.rename(columns={"Demand": "Aggregate_Demand", "Net generation": "Aggregate_Generation"})
+        
+        monthly_data_df['Average_Demand'] = average_demand_generation['Demand']
+        monthly_data_df['Average_Generation'] = average_demand_generation['Net generation']
+        
+        monthly_data_df = calculate_generation_demand_ratio(monthly_data_df)
+        
+        
+        aggregate_demand_list_by_month = get_data_list_by_month(monthly_data_df, 'Aggregate_Demand')
+        aggregate_generation_list_by_month = get_data_list_by_month(monthly_data_df, 'Aggregate_Generation')
+        average_demand_list_by_month = get_data_list_by_month(monthly_data_df, 'Average_Demand')
+        average_generation_list_by_month = get_data_list_by_month(monthly_data_df, 'Average_Generation')
+        
+        table_records = monthly_data_df.to_dict('records')
+        
+        
+        aggregate_demand_list_by_quarter = get_data_list_by_quarter(aggregate_data_quarter, 'Demand')
+        
+        aggregate_generation_list_by_quarter = get_data_list_by_quarter(aggregate_data_quarter, 'Net generation')
+        
+        
+        
+        monthly_graph_data = {
+            "aggregateDemand": aggregate_demand_list_by_month,
+            "aggregateGeneration": aggregate_generation_list_by_month,
+            "averageDemand": average_demand_list_by_month,
+            "averageGeneration": average_generation_list_by_month
+        }
+        
+        aggregateGenerationGivenYear = {
+            "value": total_generation_given_year,
+            "percentChange": percent_change_generation_given_year
+        }
+        
+        aggregateDemandGivenYear = {
+            "value": total_demand_given_year,
+            "percentChange": percent_change_demand_given_year
+        }
+        
+        
+        aggregateDemandCurrentMonth = {
+            "value": total_demand_current_month,
+            "percentChange": total_demand_current_month_pc
+        }
+        
+        aggregateGenerationCurrentMonth = {
+            "value": total_generation_current_month,
+            "percentChange": total_generation_current_month_pc
+        }
+        
+        quarterly_graph_data = {
+            "aggregateDemand": aggregate_demand_list_by_quarter,
+            "aggregateGeneration": aggregate_generation_list_by_quarter
+        }
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        result = {
+            "region": region,
+            "year": year,
+            "monthlyGraph" : monthly_graph_data,
+            "quarterlyGraph" : quarterly_graph_data,
+            "tableData" : table_records,
+            "aggregateDemandGivenYear" : aggregateDemandGivenYear,
+            "aggregateGenerationGivenYear": aggregateGenerationGivenYear,
+            "aggregateDemandCurrentMonth" : aggregateDemandCurrentMonth,
+            "aggregateGenerationCurrentMonth": aggregateGenerationCurrentMonth,
+            "totalEnergyImport": total_energy_import, 
+            "totalEnergyExport": total_energy_export
+            
+            
+        }
+        
     
- 
-    
-    
-    
-    return {
-        'statusCode': 200,
-        'headers': {
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*'
-        },
-        'body': json.dumps(result)
-    }
+        
+        
+        
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps(result)
+        }
+    except Exception as e:
+        error_response = {
+            'statusCode': 500,
+            'headers': {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*'
+            },
+            'body': json.dumps({'message': 'There was some error.'})
+        }
+        print("Error: ", e)
+        return error_response

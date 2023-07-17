@@ -259,4 +259,5 @@ def lambda_handler(event, context):
             },
             'body': json.dumps({'message': 'There was some error.'})
         }
+        print("Error: ", e)
         return error_response
