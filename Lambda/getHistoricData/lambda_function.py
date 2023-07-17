@@ -156,6 +156,7 @@ def lambda_handler(event, context):
         lambda x: int((datetime.fromisoformat(str(x)) + target_offset).timestamp() * 1000)
     )
 
+    print(aggregate_historic_generation_df.tail())
 
     # Convert DataFrames to list of lists with epoch time as integers
     historic_demand_data = aggregate_historic_demand_df[['epoch_time_ms', 'value']].astype({'epoch_time_ms': int}).values.tolist()
